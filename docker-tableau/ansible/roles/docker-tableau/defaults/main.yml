@@ -1,0 +1,52 @@
+# Default vars for docker_tableau
+# ---------------------------------
+# Some of them are empty because they 
+# are only here to show possibilities
+
+# Core directories settings
+# ---------------------------------
+# I recommend to redefine deploy_dir
+deploy_dir: "/opt"
+docker_tableau_deploy_dir: "{{ deploy_dir }}/tableau"
+docker_tableau_build_dir: "{{ docker_tableau_deploy_dir }}/build"
+
+# Permissions settings
+docker_tableau_unprivileged_system_user_uid:
+docker_tableau_unprivileged_system_user_gid:
+docker_tableau_unprivileged_system_user_name:
+docker_tableau_unprivileged_system_user_groupname:
+docker_tableau_privileged_system_user_gid:
+
+# License keys list to use
+docker_tableau_license_keys:
+
+docker_tableau_use_trial_license: false
+
+# This role includes nginx reverse proxy deploy for talbleau service
+docker_tableau_use_reverse_proxy_enabled: false
+docker_tableau_internal_backups_dir:
+docker_tableau_gateway_public_host:
+docker_tableau_gateway_public_port: 
+
+# Admin users settigs
+docker_tableau_admin_username:
+docker_tableau_admin_password:
+docker_tableau_tsm_tableau_password:
+
+docker_tableau_backups_dir:
+docker_tableau_s3_backups_url:
+docker_tableau_autoremove_old_backups: false
+# Cron autobackups settings
+docker_tableau_enable_autobackups: false
+docker_tableau_autobackups_crontab:
+  - minute: 0
+  - hour: 0
+  - day: 7
+  - weekday: "*"
+  - month: "*"
+
+# This role supports s3 backups for tableau service
+docker_tableau_s3_backups:
+  - access_key_id:
+  - secret_access_key:
+  - region:

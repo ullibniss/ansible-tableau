@@ -1,0 +1,19 @@
+---
+- name: Reset tsm admin user (https://help.tableau.com/current/server/en-us/cli_reset_tsm.htm)
+  ansible.builtin.command:
+    cmd: "docker-compose exec -T tableau-server tsm reset"
+    chdir: "{{ docker_tableau_deploy_dir }}"
+  ignore_errors: yes
+  changed_when: True
+
+- name: Run tsm initial user (https://help.tableau.com/current/server/en-us/tabcmd_cmd.htm#initialu)
+  ansible.builtin.command:
+    cmd: "docker-compose exec -T tableau-server tabcmd initialuser --username \"{{ docker_tableau_admin_username }}\" --password \"{{ docker_tableau_admin_password }}\" --server http://localhost:8080"
+    chdir: "{{ docker_tableau_deploy_dir }}"
+  changed_when: True
+
+- name: Set tableau user password (for TSM maintenance server)
+  ansible.builtin.shell:
+    cmd: "docker-compose exec -u root -T tableau-server 'echo \"{{ docker_tableau_tsm_tableau_password }}\" | passwd \"tableau\" --stdin'"
+    chdir: "{{ docker_tableau_deploy_dir }}"
+  when: docker_tableau_use_reverse_proxy_enabled

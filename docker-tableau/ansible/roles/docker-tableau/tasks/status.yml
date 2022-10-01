@@ -1,0 +1,32 @@
+---
+  - name: docker-compose ps
+    command: docker-compose ps
+    args:
+      chdir: "{{ docker_tableau_deploy_dir }}"
+    register: ps_result
+    failed_when: "' Up ' not in ps_result.stdout"
+    changed_when: False
+
+  - name: Print stdout from docker-compose ps
+    debug:
+      msg: "{{ ps_result.stdout }}"
+
+  - name: Print stderr from docker-compose ps
+    debug:
+      msg: "{{ ps_result.stderr }}"
+
+  - name: Run tsm status
+    command: docker-compose exec -T tableau-server tsm status -v
+    args:
+      chdir: "{{ docker_tableau_deploy_dir }}"
+    register: tsm_status_result
+    failed_when: "'Could not connect to server' in tsm_status_result.stdout"
+    changed_when: False
+
+  - name: Print stdout from tsm status
+    debug:
+      msg: "{{ tsm_status_result.stdout }}"
+
+  - name: Print stderr from tsm status
+    debug:
+      msg: "{{ tsm_status_result.stderr }}"

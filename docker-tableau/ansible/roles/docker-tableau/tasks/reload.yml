@@ -1,0 +1,6 @@
+---
+- name: Reload server with tsm
+  ansible.builtin.shell:
+    cmd: "docker-compose exec -T tableau-server tsm restart"
+    chdir: "{{ docker_tableau_deploy_dir }}"
+

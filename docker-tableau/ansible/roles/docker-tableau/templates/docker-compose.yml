@@ -1,0 +1,26 @@
+version: '3.1'
+
+services:
+  tableau-server:
+    image: 'mshpd/tableau-server:latest'
+    hostname: tableau
+    restart: always
+    environment:
+      TABLEAU_USERNAME: "{{ docker_tableau_admin_username }}"
+      TABLEAU_PASSWORD: "{{ docker_tableau_admin_password }}"
+      TSM_ONLY: 1
+    volumes:
+      - "{{ docker_tableau_deploy_dir }}/tableau_data:/var/opt/tableau"
+      - "{{ docker_tableau_deploy_dir }}/reg-info.json:/var/opt/tableau-reg-info.json"
+      - "{{ docker_tableau_deploy_dir }}/initial_settings.json:/var/opt/tableau-initial_settings.json"
+      - "{{ docker_tableau_deploy_dir }}/backups:{{ tableau_internal_backups_dir }}"
+    ports:
+      - 127.0.0.1:8200:8080
+      - 127.0.0.1:8250:8850
+    networks:
+      - tableau_internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  # need to resolve connections from host machine with fixed hostname
+networks:
+  tableau_internal:
+    external: true

@@ -1,0 +1,7 @@
+---
+- name: Start creating backup process...
+  ansible.builtin.command:
+    chdir: "{{ docker_tableau_deploy_dir }}"
+    cmd: "./create_backup.sh"
+  become: True
+  changed_when: True

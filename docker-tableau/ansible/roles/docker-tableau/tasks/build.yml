@@ -1,0 +1,6 @@
+---
+- name:  Run ./build-image -i ../tableau-server.rpm --accepteula -o mshpd/tableau-server -e build_vars.env
+  ansible.builtin.command:
+    cmd: ./build-image -i ../tableau-server.rpm --accepteula -o mshpd/tableau-server -e build_vars.env
+    chdir: "{{ docker_tableau_build_dir }}/tableau-server-container-setup-tool-2021.4.0"
+  changed_when: True

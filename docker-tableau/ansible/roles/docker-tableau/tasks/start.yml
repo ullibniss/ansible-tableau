@@ -1,0 +1,7 @@
+---
+- name: docker-compose up -d
+  command: docker-compose up -d
+  args:
+    chdir: "{{ docker_tableau_deploy_dir }}"
+  register: result
+  changed_when: "'up-to-date' not in result.stdout"

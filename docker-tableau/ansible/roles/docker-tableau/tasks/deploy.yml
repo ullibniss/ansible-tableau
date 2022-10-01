@@ -1,0 +1,95 @@
+---
+- name: Create tableau server directory
+  ansible.builtin.file:
+    path: "{{ docker_tableau_deploy_dir }}"
+    state: directory
+    mode: 0755
+    owner: "{{ default_user }}"
+    group: "{{ default_user }}"
+  become: true
+
+- name: Create tableau server data && backups directories
+  ansible.builtin.file:
+    path: "{{ docker_tableau_deploy_dir }}/{{ path_to_dir }}"
+    state: directory
+    mode: 0755
+    owner: "{{ docker_tableau_unprivileged_system_user_uid }}"
+    group: "{{ docker_tableau_unprivileged_system_user_gid }}"
+  loop:
+    - tableau_data
+    - backups
+    - backups/settings
+  loop_control:
+    loop_var: path_to_dir
+  become: true
+
+- name: Render configuration files for tableau
+  ansible.builtin.template:
+    src: "{{ file  }}"
+    dest: "{{ docker_tableau_deploy_dir }}/{{ file }}"
+    owner: "{{ default_user }}"
+    mode: 0644
+  loop:
+    - docker-compose.yml
+    - reg-info.json
+    - initial_settings.json
+  loop_control:
+    loop_var: file
+  become: true
+
+
+- name: Render backup scripts for tableau
+  ansible.builtin.template:
+    src: "{{ file }}"
+    dest: "{{ docker_tableau_deploy_dir }}/{{ file }}"
+    owner: "{{ default_user }}"
+    mode: 0755
+  loop:
+    - create_backup.sh
+    - restore_data_from_backup.sh
+    - restore_settings_from_backup.sh
+    - s3_sync_backups.sh
+  loop_control:
+    loop_var: file
+  become: true
+
+- name: Pull tableau-server docker image
+  ansible.builtin.command: "docker-compose pull"
+  args:
+    chdir: "{{ docker_tableau_deploy_dir }}/"
+  when: not is_development
+
+- name: Render configuration files for nginx-proxy
+  ansible.builtin.template:
+    src: "nginx-server-config.conf"
+    dest: "/etc/nginx/sites-enabled/8200_tableau.conf"
+    owner: "root"
+    mode: 0644
+  become: true
+  when: not is_development
+
+- name: Create cron job for backups creation process
+  ansible.builtin.cron:
+    name: mshp_tableau_backup_creation
+    cron_file: mshp_tableau
+    user: root
+    job: "{{ docker_tableau_deploy_dir }}/create_backup.sh"
+    state: "{{ 'present' if docker_tableau_enable_autobackups else 'absent' }}"
+    day: "{{ docker_tableau_autobackups_crontab.day }}"
+    hour: "{{ docker_tableau_autobackups_crontab.hour }}"
+    minute: "{{ docker_tableau_autobackups_crontab.minute }}"
+    month: "{{ docker_tableau_autobackups_crontab.month }}"
+    weekday: "{{ docker_tableau_autobackups_crontab.weekday }}"
+  become: true
+  when: docker_tableau_enable_autobackups == true
+
+- name: Check whether tableau_internal network does not exist
+  ansible.builtin.shell: 
+    cmd: set -o pipefail && docker network ls | grep -c " tableau_internal " || true
+    executable: /bin/bash
+  register: network_exists
+  changed_when: False
+
+- name: Create tableau_internal network
+  ansible.builtin.command: docker network create -d bridge tableau_internal
+  when: network_exists.stdout == "0"

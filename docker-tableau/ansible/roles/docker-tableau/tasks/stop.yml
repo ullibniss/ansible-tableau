@@ -1,0 +1,5 @@
+---
+- name: docker-compose stop
+  command: docker-compose stop
+  args:
+    chdir: "{{ docker_tableau_deploy_dir }}"

@@ -1,0 +1,40 @@
+---
+- name: Apply new backup files path
+  ansible.builtin.command:
+    cmd: "docker-compose exec -T tableau-server tsm configuration set -k basefilepath.backuprestore -v {{ docker_tableau_internal_backups_dir }}"
+    chdir: "{{ docker_tableau_deploy_dir }}"
+  changed_when: True
+
+- name: Reverse proxy tableau configuration
+  block:
+  - name: Apply gateway public hostname
+    ansible.builtin.command:
+      cmd: "docker-compose exec -T tableau-server tsm configuration set -k gateway.public.host -v \"{{ docker_tableau_gateway_public_host }}\""
+      chdir: "{{ docker_tableau_deploy_dir }}"
+
+  - name: Apply gateway public port for tableau-server
+    ansible.builtin.command:
+      cmd: "docker-compose exec -T tableau-server tsm configuration set -k gateway.public.port -v {{ docker_tableau_gateway_public_port }}"
+      chdir: "{{ docker_tableau_deploy_dir }}"
+
+  - name: Apply trusted gateway hosts for tableau-server
+    ansible.builtin.command:
+      cmd: "docker-compose exec -T tableau-server tsm configuration set -k gateway.trusted_hosts -v \"host.docker.internal\""
+      chdir: "{{ docker_tableau_deploy_dir }}"
+
+  - name: Apply external trusted hosts (production, etc.) for tableau-server
+    ansible.builtin.command:
+      cmd: "docker-compose exec -T tableau-server tsm authentication trusted configure -th {{ '\"' + tableau_trusted_external_hosts|join('\", \"') + '\"' }}"
+      chdir: "{{ docker_tableau_deploy_dir }}"
+
+  - name: Apply CSP settings for tableau-server (https://help.tableau.com/current/server/en-us/security_csp.htm)
+    ansible.builtin.command:
+      cmd: "docker-compose exec -T tableau-server tsm configuration set -k content_security_policy.directive.frame_src -v \"self *.informatics.ru\""
+      chdir: "{{ docker_tableau_deploy_dir }}"
+  when: docker_tableau_use_reverse_proxy_enabled
+
+- name: Apply changes 
+  ansible.builtin.command:
+    cmd: "docker-compose exec -T tableau-server tsm pending-changes apply --ignore-warnings"
+    chdir: "{{ docker_tableau_deploy_dir }}"
+  changed_when: True

@@ -1,0 +1,43 @@
+---
+- name: Create tableau server build directory
+  ansible.builtin.file:
+    path: "{{ docker_tableau_build_dir }}"
+    state: directory
+    mode: 0755
+    owner: "{{ default_user }}"
+    group: "{{ default_user }}"
+  become: true
+
+- name: Download and unzip tableau-server-container-setup-tool-2021.4.0
+  ansible.builtin.unarchive:
+    src: https://downloads.tableau.com/esdalt/2021.4.0/tableau-server-container-setup-tool-2021.4.0.tar.gz
+    dest: "{{ docker_tableau_build_dir }}" 
+    remote_src: yes
+
+- name: Download tableau-server.rpm installer
+  ansible.builtin.get_url:
+    url: https://downloads.tableau.com/esdalt/2021.4.2/tableau-server-2021-4-2.x86_64.rpm
+    dest: "{{ docker_tableau_build_dir }}/tableau-server.rpm"
+
+- name: Render tableau build env vars
+  ansible.builtin.template:
+    src: "build_vars.env"
+    dest: "{{ docker_tableau_build_dir }}/tableau-server-container-setup-tool-2021.4.0/build_vars.env"
+    owner: "{{ default_user }}"
+    mode: 0644
+  become: true
+
+- name: Render tableau drivers setup script
+  ansible.builtin.template:
+    src: "drivers-setup-script.sh"
+    dest: "{{ docker_tableau_build_dir }}/tableau-server-container-setup-tool-2021.4.0/customer-files/setup-script"
+    owner: "{{ default_user }}"
+    mode: 0755
+  become: true
+
+- name: Install binutils (needed for building tableau)
+  ansible.builtin.apt:
+    name: binutils
+    state: present
+    update_cache: yes
+  become: true

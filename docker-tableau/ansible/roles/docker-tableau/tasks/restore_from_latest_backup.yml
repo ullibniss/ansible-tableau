@@ -1,0 +1,14 @@
+---
+- name: Start restore settings from latest backup command
+  ansible.builtin.command:
+    chdir: "{{ docker_tableau_deploy_dir }}"
+    cmd: "./restore_settings_from_backup.sh --latest"
+  become: True
+  changed_when: True
+
+- name: Start restore data from latest backup command
+  ansible.builtin.command:
+    chdir: "{{ docker_tableau_deploy_dir }}"
+    cmd: "./restore_data_from_backup.sh --latest"
+  become: True
+  changed_when: True

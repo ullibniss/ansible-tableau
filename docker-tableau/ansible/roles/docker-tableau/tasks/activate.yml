@@ -1,0 +1,30 @@
+---
+- name: Run tsm activate trial
+  ansible.builtin.shell:
+    cmd: "docker-compose exec -T tableau-server tsm licenses activate -t"
+    chdir: "{{ docker_tableau_deploy_dir }}"
+  when: docker_tableau_use_trial_license == True
+
+- name: Run tsm activate license keys
+  ansible.builtin.shell:
+    cmd: "docker-compose exec -T tableau-server tsm licenses activate -k {{ license_key }}"
+    chdir: "{{ docker_tableau_deploy_dir }}"
+  when: docker_tableau_use_trial_license != True
+  loop: "{{ docker_tableau_license_keys }}"
+  loop_control:
+    loop_var: license_key
+  ignore_errors: yes
+
+- name: Run tsm register
+  ansible.builtin.shell:
+    cmd: "docker-compose exec -T tableau-server tsm register --file /var/opt/tableau-reg-info.json"
+    chdir: "{{ docker_tableau_deploy_dir }}"
+  register: register_result
+
+- name: Print tsm register stdout
+  debug:
+    msg: "{{ register_result.stdout }}"
+
+- name: Print tsm register stderr
+  debug:
+    msg: "{{ register_result.stderr }}"
